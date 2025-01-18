@@ -1,0 +1,1 @@
+cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=D:/Qt/6.7.3/msvc2022_64
