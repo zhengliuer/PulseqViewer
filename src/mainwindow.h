@@ -2,9 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include <QProgressBar>
+#include <QLabel>
 
 #include <ExternalSequence.h>
+
 
 #define SAFE_DELETE(p) { if(p) { delete p; p = nullptr; } }
 
@@ -37,6 +39,9 @@ private:
 
 private:
     Ui::MainWindow                       *ui;
+
+    QLabel                               *m_pVersionLabel;
+    QProgressBar                         *m_pProgressBar;
 
     // Pulseq
     QString                              m_sPulseqFilePath;

@@ -19,10 +19,23 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    SAFE_DELETE(m_pVersionLabel);
+    SAFE_DELETE(m_pProgressBar);
 }
 
 void MainWindow::Init()
 {
+    m_pVersionLabel= new QLabel(this);
+    ui->statusbar->addWidget(m_pVersionLabel);
+
+    m_pProgressBar = new QProgressBar(this);
+    m_pProgressBar->setMaximumWidth(200);
+    m_pProgressBar->setMinimumWidth(200);
+    m_pProgressBar->hide();
+    m_pProgressBar->setRange(0, 100);
+    m_pProgressBar->setValue(0);
+    ui->statusbar->addWidget(m_pProgressBar);
+
     InitSlots();
     InitSequenceFigure();
 }
@@ -96,6 +109,10 @@ void MainWindow::OpenPulseqFile()
 
 void MainWindow::ClearPulseqCache()
 {
+    m_pVersionLabel->setText("");
+    m_pVersionLabel->setVisible(false);
+    m_pProgressBar->hide();
+
     if (nullptr != m_spPulseqSeq)
     {
         m_spPulseqSeq->reset();
@@ -106,10 +123,12 @@ void MainWindow::ClearPulseqCache()
         m_vecSeqBlocks.clear();
         std::cout << m_sPulseqFilePath.toStdString() << " Closed\n";
     }
+    this->setWindowFilePath("");
 }
 
 bool MainWindow::LoadPulseqFile(const QString& sPulseqFilePath)
 {
+    this->setEnabled(false);
     ClearPulseqCache();
     if (!m_spPulseqSeq->load(sPulseqFilePath.toStdString()))
     {
@@ -119,9 +138,21 @@ bool MainWindow::LoadPulseqFile(const QString& sPulseqFilePath)
         QMessageBox::critical(this, "File Error", sLog.str().c_str());
         return false;
     }
+    this->setWindowFilePath(sPulseqFilePath);
+
+    const int& shVersion = m_spPulseqSeq->GetVersion();
+    m_pVersionLabel->setVisible(true);
+    const int& shVersionMajor = shVersion / 1000000L;
+    const int& shVersionMinor = (shVersion / 1000L) % 1000L;
+    const int& shVersionRevision = shVersion % 1000L;
+    QString sVersion = QString::number(shVersionMajor) + "." + QString::number(shVersionMinor) + "." + QString::number(shVersionRevision);
+    m_pVersionLabel->setText("Pulseq Version: v" + sVersion);
+
     const int64_t& lSeqBlockNum = m_spPulseqSeq->GetNumberOfBlocks();
     std::cout << lSeqBlockNum << " blocks detected!\n";
     m_vecSeqBlocks.resize(lSeqBlockNum);
+    m_pProgressBar->show();
+    uint8_t progress(0);
     for (uint16_t ushBlockIndex=0; ushBlockIndex < lSeqBlockNum; ushBlockIndex++)
     {
         m_vecSeqBlocks[ushBlockIndex] = m_spPulseqSeq->GetBlock(ushBlockIndex);
@@ -130,10 +161,13 @@ bool MainWindow::LoadPulseqFile(const QString& sPulseqFilePath)
             std::stringstream sLog;
             sLog << "Decode SeqBlock failed, block index: " << ushBlockIndex;
             QMessageBox::critical(this, "File Error", sLog.str().c_str());
+            ClearPulseqCache();
             return false;
         }
+        progress = (ushBlockIndex + 1) * 100 / lSeqBlockNum;
+        m_pProgressBar->setValue(progress);
     }
-
+    this->setEnabled(true);
     return true;
 }
 
