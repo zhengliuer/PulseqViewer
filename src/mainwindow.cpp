@@ -87,52 +87,50 @@ void MainWindow::InitSequenceFigure()
     // ui->customPlot->setOpenGl(true);
 
     const bool& enableOpenGL = ui->customPlot->openGl();
-    if (!enableOpenGL)
-    {
-        QMessageBox::information(this, "Fail", "OpenGL init failed!");
-        // return;
-    }
+    // if (!enableOpenGL)
+    // {
+    //     QMessageBox::information(this, "Fail", "OpenGL init failed!");
+    //       return;
+    // }
     setInteraction(false);
 
     uint8_t index(0);
+    QMargins margins(70, 10, 10, 10);
+    QFont labelFont;
+    labelFont.setWeight(QFont::DemiBold);
     for (auto& axis : m_listAxis)
     {
         index = m_listAxis.indexOf(axis);
         m_mapRect[axis] = new QCPAxisRect(ui->customPlot);
         m_mapRect[axis]->axis(QCPAxis::atBottom)->setLabel("Time (us)");
-        m_mapRect[axis]->axis(QCPAxis::atLeft)->setNumberFormat("g");
+        m_mapRect[axis]->axis(QCPAxis::atLeft)->setNumberFormat("f");
+        m_mapRect[axis]->axis(QCPAxis::atLeft)->setNumberPrecision(0);
         ui->customPlot->plotLayout()->addElement(index, 0, m_mapRect[axis]);
+
+        m_mapRect[axis]->setMinimumMargins(margins);
+        m_mapRect[axis]->setRangeDrag(Qt::Horizontal);
+        m_mapRect[axis]->setRangeZoom(Qt::Horizontal);
+        m_mapRect[axis]->setupFullAxesBox(true);
+        m_mapRect[axis]->axis(QCPAxis::atLeft)->setLabelFont(labelFont);
+        // m_mapRect[axis]->axis(QCPAxis::atLeft)->setLabelPadding(10);
     }
 
     m_mapRect["RF"]->axis(QCPAxis::atLeft)->setLabel("RF (Hz)");
-    m_mapRect["GZ"]->axis(QCPAxis::atLeft)->setLabel("GZ (Hz/m)");
-    m_mapRect["GY"]->axis(QCPAxis::atLeft)->setLabel("GY (Hz/m)");
-    m_mapRect["GX"]->axis(QCPAxis::atLeft)->setLabel("GX (Hz/m)");
+    m_mapRect["GZ"]->axis(QCPAxis::atLeft)->setLabel("GZ (kHz/m)");
+    m_mapRect["GY"]->axis(QCPAxis::atLeft)->setLabel("GY (kHz/m)");
+    m_mapRect["GX"]->axis(QCPAxis::atLeft)->setLabel("GX (kHz/m)");
     m_mapRect["ADC"]->axis(QCPAxis::atLeft)->setLabel("ADC");
 
+    m_mapRect["ADC"]->axis(QCPAxis::atLeft)->setRange(0, 1.3);
     QSharedPointer<QCPAxisTickerText> ticker(new QCPAxisTickerText);
     ticker->addTick(0, "0");
     ticker->addTick(1, "1");
     m_mapRect["ADC"]->axis(QCPAxis::atLeft)->setTicker(ticker);
 
-    QMargins margins(70, 10, 10, 10);
-    QFont labelFont;
-    labelFont.setWeight(QFont::DemiBold);
-    foreach (auto& rect, m_mapRect)
-    {
-        rect->setMinimumMargins(margins);
-        rect->setRangeDrag(Qt::Horizontal);
-        rect->setRangeZoom(Qt::Horizontal);
-        rect->setupFullAxesBox(true);
-
-        rect->axis(QCPAxis::atLeft)->setLabelPadding(10);
-        rect->axis(QCPAxis::atLeft)->setLabelFont(labelFont);
-    }
-
     // Hide all time axis but the last one
     UpdateAxisVisibility();
 
-    m_mapRect["ADC"]->axis(QCPAxis::atLeft)->setRange(0, 1.3);
+
     ui->customPlot->replot();
 }
 
@@ -469,7 +467,7 @@ bool MainWindow::LoadPulseqFile(const QString& sPulseqFilePath)
                 m_vecGxLib = gxLib;
                 m_vecAdcLib = adcLib;
                 DrawWaveform();
-                this->setWindowTitle(QString(BASIC_WIN_TITLE) + QString(": ") + sPulseqFilePath + QString("(") + m_sPulseqVersion + QString(")"));
+                this->setWindowTitle(QString(BASIC_WIN_TITLE) + QString(": ") + sPulseqFilePath + QString("(v") + m_sPulseqVersion + QString(")"));
                 this->setWindowFilePath(sPulseqFilePath);
                 m_pProgressBar->setValue(100);
                 this->setEnabled(true);
@@ -537,6 +535,7 @@ void MainWindow::DrawWaveform()
     }
     double marginRF = (rfMaxAmp - rfMinAmp) * 0.1;
     m_mapRect["RF"]->axis(QCPAxis::atLeft)->setRange(rfMinAmp - marginRF, rfMaxAmp + marginRF);
+    qDebug() << "Rendering RF finished!\n";
 
     for(const auto& gzInfo : m_vecGzLib)
     {
@@ -556,6 +555,7 @@ void MainWindow::DrawWaveform()
     double maxGzAbsAmp = std::max(std::abs(gzMaxAmp_Hz_m), std::abs(gzMinAmp_Hz_m));
     double marginGz = maxGzAbsAmp * 0.1;
     m_mapRect["GZ"]->axis(QCPAxis::atLeft)->setRange(- maxGzAbsAmp - marginGz, maxGzAbsAmp + marginGz);
+    qDebug() << "Rendering GZ finished!\n";
 
     for(const auto& gyInfo : m_vecGyLib)
     {
@@ -575,6 +575,7 @@ void MainWindow::DrawWaveform()
     double maxGyAbsAmp = std::max(std::abs(gyMaxAmp_Hz_m), std::abs(gyMinAmp_Hz_m));
     double marginGy = maxGyAbsAmp * 0.1;
     m_mapRect["GY"]->axis(QCPAxis::atLeft)->setRange(- maxGyAbsAmp - marginGy, maxGyAbsAmp + marginGy);
+    qDebug() << "Rendering GY finished!\n";
 
     for(const auto& gxInfo : m_vecGxLib)
     {
@@ -594,6 +595,7 @@ void MainWindow::DrawWaveform()
     double maxGxAbsAmp = std::max(std::abs(gxMaxAmp_Hz_m), std::abs(gxMinAmp_Hz_m));
     double marginGx = maxGxAbsAmp * 0.1;
     m_mapRect["GX"]->axis(QCPAxis::atLeft)->setRange(- maxGxAbsAmp - marginGx, maxGxAbsAmp + marginGx);
+    qDebug() << "Rendering GX finished!\n";
 
     for(const auto& adcInfo : m_vecAdcLib)
     {
@@ -608,7 +610,7 @@ void MainWindow::DrawWaveform()
         adcGraph->setPen(pen);
         adcGraph->setSelectable(QCP::stWhole);
     }
-
+    qDebug() << "Rendering ADC finished!\n";
 
     UpdatePlotRange(0, m_stSeqInfo.totalDuration_us);
 }

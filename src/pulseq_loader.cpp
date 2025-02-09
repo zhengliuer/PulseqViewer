@@ -127,7 +127,7 @@ bool PulseqLoader::LoadPulseqEvents()
         if (pSeqBlock->isTrapGradient(gradAxis = kGZ))
         {
             const GradEvent& gradEvent = pSeqBlock->GetGradEvent(gradAxis);
-            const float& amp = gradEvent.amplitude;
+            const float& amp = gradEvent.amplitude * 1e-3;
             m_stSeqInfo.gzMaxAmp_Hz_m = std::max(m_stSeqInfo.gzMaxAmp_Hz_m, (double)amp);
             m_stSeqInfo.gzMinAmp_Hz_m = std::min(m_stSeqInfo.gzMinAmp_Hz_m, (double)amp);
             int duration_us = gradEvent.rampUpTime + gradEvent.flatTime + gradEvent.rampDownTime;
@@ -141,7 +141,7 @@ bool PulseqLoader::LoadPulseqEvents()
         if (pSeqBlock->isTrapGradient(gradAxis = kGY))
         {
             const GradEvent& gradEvent = pSeqBlock->GetGradEvent(gradAxis);
-            const float& amp = gradEvent.amplitude;
+            const float& amp = gradEvent.amplitude * 1e-3;
             m_stSeqInfo.gyMaxAmp_Hz_m = std::max(m_stSeqInfo.gyMaxAmp_Hz_m, (double)amp);
             m_stSeqInfo.gyMinAmp_Hz_m = std::min(m_stSeqInfo.gyMinAmp_Hz_m, (double)amp);
             int duration_us = gradEvent.rampUpTime + gradEvent.flatTime + gradEvent.rampDownTime;
@@ -155,7 +155,7 @@ bool PulseqLoader::LoadPulseqEvents()
         if (pSeqBlock->isTrapGradient(gradAxis = kGX))
         {
             const GradEvent& gradEvent = pSeqBlock->GetGradEvent(gradAxis);
-            const float& amp = gradEvent.amplitude;
+            const float& amp = gradEvent.amplitude * 1e-3;
             m_stSeqInfo.gxMaxAmp_Hz_m = std::max(m_stSeqInfo.gxMaxAmp_Hz_m, (double)amp);
             m_stSeqInfo.gxMinAmp_Hz_m = std::min(m_stSeqInfo.gxMinAmp_Hz_m, (double)amp);
             int duration_us = gradEvent.rampUpTime + gradEvent.flatTime + gradEvent.rampDownTime;
