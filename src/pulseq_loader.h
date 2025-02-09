@@ -5,6 +5,7 @@
 #include <QMap>
 #include <ExternalSequence.h>
 
+#define DEBUG qDebug().nospace().noquote()
 typedef QMap<QPair<int, int>, QVector<double>> RfTimeWaveShapeMap;
 
 enum GradAxis

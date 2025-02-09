@@ -5,6 +5,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <qcustomplot.h>
+#include <QElapsedTimer>
 
 #include <ExternalSequence.h>
 #include "pulseq_loader.h"
@@ -35,6 +36,7 @@ private:
     void UpdatePlotRange(const double& x1, const double& x2);
     void RestoreViewLayout();
     void UpdateAxisVisibility();
+    void PrintTimeCost(QElapsedTimer& timer, const QString& info, const bool& restart);
 
     // Pulseq
     void ClearPulseqCache();
@@ -78,6 +80,8 @@ private:
 
     QLabel                               *m_pVersionLabel;
     QProgressBar                         *m_pProgressBar;
+
+    QElapsedTimer                        m_qTimer;
 
     // Pulseq
     QString                              m_sPulseqFilePath;

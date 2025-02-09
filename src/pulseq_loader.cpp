@@ -1,6 +1,7 @@
 #include "pulseq_loader.h"
 
 #include <complex>
+#include <qdebug.h>
 
 PulseqLoader::PulseqLoader(QObject *parent)
     : QObject{parent}
@@ -180,9 +181,10 @@ bool PulseqLoader::LoadPulseqEvents()
         dCurrentStartTime_us += pSeqBlock->GetDuration();
         m_stSeqInfo.totalDuration_us += pSeqBlock->GetDuration();
     }
-    std::cout << m_vecRfLib.size() << " RF events detetced!\n";
-    std::cout << m_vecGzLib.size() << " GZ events detetced!\n";
-    std::cout << m_vecGyLib.size() << " GY events detetced!\n";
-    std::cout << m_vecGxLib.size() << " GX events detetced!\n";
+    DEBUG << m_vecRfLib.size() << " RF events detetced!";
+    DEBUG << m_vecGzLib.size() << " GZ events detetced!";
+    DEBUG << m_vecGyLib.size() << " GY events detetced!";
+    DEBUG << m_vecGxLib.size() << " GX events detetced!";
+    DEBUG << m_vecAdcLib.size() << " ADC events detetced!";
     return true;
 }

@@ -242,7 +242,7 @@ void MainWindow::SlotOpenPulseqFile()
         if (!LoadPulseqFile(m_sPulseqFilePath))
         {
             m_sPulseqFilePath.clear();
-            std::cout << "LoadPulseqFile failed!\n";
+            DEBUG << "LoadPulseqFile failed!";
         }
         m_sPulseqFilePathCache = m_sPulseqFilePath;
     }
@@ -396,7 +396,7 @@ void MainWindow::ClearPulseqCache()
             SAFE_DELETE(m_vecSeqBlocks[ushBlockIndex]);
         }
         m_vecSeqBlocks.clear();
-        std::cout << m_sPulseqFilePath.toStdString() << " Closed\n";
+        DEBUG << m_sPulseqFilePath << " Closed";
     }
     this->setWindowFilePath("");
     this->setWindowTitle(QString(BASIC_WIN_TITLE));
@@ -405,6 +405,7 @@ void MainWindow::ClearPulseqCache()
 
 bool MainWindow::LoadPulseqFile(const QString& sPulseqFilePath)
 {
+    m_qTimer.start();
     this->setEnabled(false);
     setInteraction(false);
     ClearPulseqCache();
@@ -499,6 +500,10 @@ void MainWindow::DrawWaveform()
     pen.setJoinStyle(Qt::MiterJoin);
     pen.setCapStyle(Qt::FlatCap);
 
+    QString timeCostInfo;
+    QElapsedTimer timer;
+    timer.start();
+
     float rfMaxAmp(0.);
     float rfMinAmp(0.);
     for(const auto& rfInfo : m_vecRfLib)
@@ -535,13 +540,14 @@ void MainWindow::DrawWaveform()
     }
     double marginRF = (rfMaxAmp - rfMinAmp) * 0.1;
     m_mapRect["RF"]->axis(QCPAxis::atLeft)->setRange(rfMinAmp - marginRF, rfMaxAmp + marginRF);
-    qDebug() << "Rendering RF finished!\n";
+    timeCostInfo = QString("Rendering RF finished");
+    PrintTimeCost(timer, timeCostInfo, true);
 
     for(const auto& gzInfo : m_vecGzLib)
     {
         QCPGraph* gzGraph = ui->customPlot->addGraph(m_mapRect["GZ"]->axis(QCPAxis::atBottom),
                                                      m_mapRect["GZ"]->axis(QCPAxis::atLeft));
-        m_vecGyGraphs.append(gzGraph);
+        m_vecGzGraphs.append(gzGraph);
 
         const QVector<double>& time = gzInfo.time;
         const QVector<double>& amplitudes = gzInfo.amplitude;
@@ -555,13 +561,14 @@ void MainWindow::DrawWaveform()
     double maxGzAbsAmp = std::max(std::abs(gzMaxAmp_Hz_m), std::abs(gzMinAmp_Hz_m));
     double marginGz = maxGzAbsAmp * 0.1;
     m_mapRect["GZ"]->axis(QCPAxis::atLeft)->setRange(- maxGzAbsAmp - marginGz, maxGzAbsAmp + marginGz);
-    qDebug() << "Rendering GZ finished!\n";
+    timeCostInfo = QString("Rendering GZ finished");
+    PrintTimeCost(timer, timeCostInfo, true);
 
     for(const auto& gyInfo : m_vecGyLib)
     {
         QCPGraph* gyGraph = ui->customPlot->addGraph(m_mapRect["GY"]->axis(QCPAxis::atBottom),
                                                      m_mapRect["GY"]->axis(QCPAxis::atLeft));
-        m_vecGxGraphs.append(gyGraph);
+        m_vecGyGraphs.append(gyGraph);
 
         const QVector<double>& time = gyInfo.time;
         const QVector<double>& amplitudes = gyInfo.amplitude;
@@ -575,13 +582,14 @@ void MainWindow::DrawWaveform()
     double maxGyAbsAmp = std::max(std::abs(gyMaxAmp_Hz_m), std::abs(gyMinAmp_Hz_m));
     double marginGy = maxGyAbsAmp * 0.1;
     m_mapRect["GY"]->axis(QCPAxis::atLeft)->setRange(- maxGyAbsAmp - marginGy, maxGyAbsAmp + marginGy);
-    qDebug() << "Rendering GY finished!\n";
+    timeCostInfo = QString("Rendering GY finished");
+    PrintTimeCost(timer, timeCostInfo, true);
 
     for(const auto& gxInfo : m_vecGxLib)
     {
         QCPGraph* gxGraph = ui->customPlot->addGraph(m_mapRect["GX"]->axis(QCPAxis::atBottom),
                                                      m_mapRect["GX"]->axis(QCPAxis::atLeft));
-        m_vecGzGraphs.append(gxGraph);
+        m_vecGxGraphs.append(gxGraph);
 
         const QVector<double>& time = gxInfo.time;
         const QVector<double>& amplitudes = gxInfo.amplitude;
@@ -595,7 +603,8 @@ void MainWindow::DrawWaveform()
     double maxGxAbsAmp = std::max(std::abs(gxMaxAmp_Hz_m), std::abs(gxMinAmp_Hz_m));
     double marginGx = maxGxAbsAmp * 0.1;
     m_mapRect["GX"]->axis(QCPAxis::atLeft)->setRange(- maxGxAbsAmp - marginGx, maxGxAbsAmp + marginGx);
-    qDebug() << "Rendering GX finished!\n";
+    timeCostInfo = QString("Rendering GX finished");
+    PrintTimeCost(timer, timeCostInfo, true);
 
     for(const auto& adcInfo : m_vecAdcLib)
     {
@@ -610,9 +619,14 @@ void MainWindow::DrawWaveform()
         adcGraph->setPen(pen);
         adcGraph->setSelectable(QCP::stWhole);
     }
-    qDebug() << "Rendering ADC finished!\n";
+    timeCostInfo = QString("Rendering ADC finished");
+    PrintTimeCost(timer, timeCostInfo, true);
+
 
     UpdatePlotRange(0, m_stSeqInfo.totalDuration_us);
+
+    timeCostInfo = QString("Loading finished");
+    PrintTimeCost(m_qTimer, timeCostInfo, false);
 }
 
 void MainWindow::onMousePress(QMouseEvent *event)
@@ -920,5 +934,14 @@ void MainWindow::windowScreenChanged(QScreen *screen)
     // 更新当前显示器的 DPI 设置
     ui->customPlot->setBufferDevicePixelRatio(screen->devicePixelRatio());
     ui->customPlot->replot(QCustomPlot::rpQueuedReplot);
+}
+
+void MainWindow::PrintTimeCost(QElapsedTimer& timer, const QString& info, const bool& restart)
+{
+    qint64 elapsed_ms =  timer.elapsed();
+    float elapsed_s = elapsed_ms * 1e-3;
+    elapsed_s = std::round(elapsed_s * 100) / 100;
+    DEBUG << info << " -- time cost: " << QString::number(elapsed_s) << "s";
+    if (restart) timer.restart();
 }
 
