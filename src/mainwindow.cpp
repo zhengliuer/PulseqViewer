@@ -37,7 +37,20 @@ MainWindow::MainWindow(QWidget *parent)
     m_pSelectionRect->setBrush(QBrush(QColor(128, 128, 128, 128)));
     m_pSelectionRect->setPen(QPen(Qt::black, 1));
 
+    m_mapAxisPen = {
+        {"RF", new QPen(Qt::blue)},
+        {"GZ", new QPen(Qt::blue)},
+        {"GY", new QPen(Qt::blue)},
+        {"GX", new QPen(Qt::blue)},
+        {"ADC", new QPen(Qt::blue)},
+    };
 
+    QPen pen;
+    // pen.setColor(Qt::blue);
+    pen.setColor(QColor(124, 186, 165));
+    pen.setWidth(1);
+    pen.setJoinStyle(Qt::MiterJoin);
+    pen.setCapStyle(Qt::FlatCap);
 }
 
 MainWindow::~MainWindow()
@@ -494,12 +507,6 @@ void MainWindow::DrawWaveform()
     if (m_vecSeqBlocks.size() == 0) return;
     if (m_vecRfLib.size() == 0) return;
 
-    QPen pen;
-    pen.setColor(Qt::blue);
-    pen.setWidth(1);
-    pen.setJoinStyle(Qt::MiterJoin);
-    pen.setCapStyle(Qt::FlatCap);
-
     QString timeCostInfo;
     QElapsedTimer timer;
     timer.start();
@@ -535,7 +542,7 @@ void MainWindow::DrawWaveform()
         rfMinAmp = std::max(rfMinAmp, (float)*minIt);
 
         rfGraph->setData(timePoints, amplitudes);
-        rfGraph->setPen(pen);
+        rfGraph->setPen(*m_mapAxisPen["RF"]);
         rfGraph->setSelectable(QCP::stWhole);
     }
     double marginRF = (rfMaxAmp - rfMinAmp) * 0.1;
@@ -553,7 +560,7 @@ void MainWindow::DrawWaveform()
         const QVector<double>& amplitudes = gzInfo.amplitude;
         gzGraph->setData(time, amplitudes);
 
-        gzGraph->setPen(pen);
+        gzGraph->setPen(*m_mapAxisPen["GZ"]);
         gzGraph->setSelectable(QCP::stWhole);
     }
     const double& gzMaxAmp_Hz_m = m_stSeqInfo.gzMaxAmp_Hz_m;
@@ -574,7 +581,7 @@ void MainWindow::DrawWaveform()
         const QVector<double>& amplitudes = gyInfo.amplitude;
         gyGraph->setData(time, amplitudes);
 
-        gyGraph->setPen(pen);
+        gyGraph->setPen(*m_mapAxisPen["GY"]);
         gyGraph->setSelectable(QCP::stWhole);
     }
     const double& gyMaxAmp_Hz_m = m_stSeqInfo.gyMaxAmp_Hz_m;
@@ -595,7 +602,7 @@ void MainWindow::DrawWaveform()
         const QVector<double>& amplitudes = gxInfo.amplitude;
         gxGraph->setData(time, amplitudes);
 
-        gxGraph->setPen(pen);
+        gxGraph->setPen(*m_mapAxisPen["GX"]);
         gxGraph->setSelectable(QCP::stWhole);
     }
     const double& gxMaxAmp_Hz_m = m_stSeqInfo.gxMaxAmp_Hz_m;
@@ -616,7 +623,7 @@ void MainWindow::DrawWaveform()
         const QVector<double>& amplitudes = adcInfo.amplitude;
         adcGraph->setData(time, amplitudes);
 
-        adcGraph->setPen(pen);
+        adcGraph->setPen(*m_mapAxisPen["ADC"]);
         adcGraph->setSelectable(QCP::stWhole);
     }
     timeCostInfo = QString("Rendering ADC finished");

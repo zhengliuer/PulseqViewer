@@ -123,6 +123,7 @@ private:
     QMap<QString, QCPAxisRect*>          m_mapRect;
     QMap<QString, QAction*>              m_mapAxisAction;
     QList<QString>                       m_listAxis;
+    QMap<QString, QPen*>                 m_mapAxisPen;
 
     // Interaction
     bool                                 m_bIsSelecting;
